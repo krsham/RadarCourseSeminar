@@ -1,0 +1,2 @@
+- Studied until P185 of radar technology encyclopedia [1403-09-08]
+- Have to stick to the outline provided. [1403-09-08]

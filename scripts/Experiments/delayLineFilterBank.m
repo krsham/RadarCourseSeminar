@@ -48,8 +48,8 @@ if plot_filter_resp
     end
     legend(legend_names)
 end
-%% Scenario with data acquisition
+%% Scenario with target trajectory
 
-
+if simulate_scenario
 
 

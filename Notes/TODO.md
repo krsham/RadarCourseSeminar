@@ -1,0 +1,1 @@
+- Study the rest of radar technology encyclopedia
