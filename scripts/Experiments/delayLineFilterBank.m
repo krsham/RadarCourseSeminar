@@ -3,17 +3,40 @@ clc;clear;close all;
 generate_filters = true;
 plot_filter_resp  = false;
 %% Parameters
+PRF = 1e3;   % Radar PRF
+fs = PRF*1000; % Radar fs
+Tstep  = 1/PRF; % Time step of simulation
+fc  = 10e9;             % carrier frequency
 pd = 0.9;               % Probability of detection
 pfa = 1e-6;             % Probability of false alarm
 max_range = 5000;       % Maximum unambiguous range
 range_res = 50;         % Required range resolution
 tgt_rcs = 1;            % Required target radar cross section
 cancellers_order = 1:2:8;  % Delay Line Cancellers
+sensorHeight      = 20;  % Height which the radar is stationed at
+g = 9.8; % m/s
+spin_center     = [1000,1000,300]'; % Center of target circle radius
+spin_radius     = 100; % meters
+simDuration     = 1 * 60; % Simulation duration
+Nsteps = simDuration /Tstep; % Number of steps per simulation
+txSpec.height = 20;
+txSpec.peakPower = 1e3;
+clutterSpec.gamma   = surfacegamma('flatland');
+clutterSpec.azimuthSpan = 360;
+clutterSpec.patchAzimuthSpan = 10;
+%% Kinematics
+tgtSpec.init_angle       = 0;
+target_acceleration = 5 * g; % m/s
+angular_speed = target_acceleration / (spin_radius^2);
+tgtSpec.vel  = spinningVelocity(angular_speed,spin_radius,tgtSpec.init_angle );
+tgtSpec.pos      = spin_center + spin_radius*[cos(tgtSpec.init_angle ),sin(tgtSpec.init_angle ),0]';
+tgtSpec.rcs   = [2,2,2];
+
 %% Basic Calculations
-prop_speed = physconst('LightSpeed');   % Propagation speed
-pulse_bw = prop_speed/(2*range_res);    % Pulse bandwidth
-pulse_width = 1/pulse_bw;               % Pulse width
-prf = prop_speed/(2*max_range);         % Pulse repetition frequency
+c = physconst('LightSpeed');   % Propagation speed
+pulse_bw = c/(2*range_res);    % Pulse bandwidth
+pw = 1/pulse_bw;               % Pulse width
+prf = c/(2*max_range);         % Pulse repetition frequency
 fs = 2*pulse_bw;                        % Sampling rate
 %% delay line canceller Generation
 if generate_filters
@@ -48,8 +71,14 @@ if plot_filter_resp
     end
     legend(legend_names)
 end
-%% Scenario with target trajectory
+%% Setup
 
-if simulate_scenario
+[waveform,transmitter,radiator,collector,receiver,sensormotion,...
+    target,tgtmotion,channel,matchedfilter,tvg,threshold,clutter] = ...
+    helperDelayLineSpinningTargetSetup(fs,pw,prf,fc,c,txSpec,tgtSpec,clutterSpec);
+%% Motion Simulation
 
+% for i = 1:Nsteps
+% 
+% end
 
