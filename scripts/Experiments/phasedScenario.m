@@ -1,53 +1,66 @@
 clc; clear; close all
 %% 
-PRF = 1e3;
+simDuration = 1 * 60;
+scan_rate = 360;
+fc  = 10e9;
+PRF = 1e4;
 Tstep = 1/PRF;
-Nsteps = 1000;
+Nsteps = simDuration * PRF;
 g = 9.8; % m/s
 init_angle    = 0;
-spin_center    = [1000,1000,0]';
+spin_center    = [100,100,0]';
 spin_radius = 10; % meters
 %% Kinematics
 target_acceleration = 10 * g; % m/s
 angular_speed = target_acceleration / (spin_radius^2);
 init_velocity = spinningVelocity(angular_speed,spin_radius,init_angle);
 init_acceleration = spinningAccel(angular_speed,spin_radius,init_angle);
-init_pos      = spin_center + spin_radius*[cos(init_angle),sin(init_angle),0]';
+init_pos      = spin_center + spin_radius*[cos(init_angle),sin(init_angle),10]';
 %% 
+scene = phased.ScenarioViewer( ...
+    'BeamWidth',[5,5]',...
+    'BeamRange',1000,'UpdateRate',PRF,...
+    'PlatformNames',{'Ground Radar','Airplane'},'ShowPosition',true,...
+    'ShowSpeed',true,'ShowAltitude',true,'ShowLegend',true);            
 
-comjet = phased.Platform('InitialPosition', init_pos, ...
+% comjet = phased.RadarTarget( ...
+%     'OperatingFrequency',fc,...
+%     'MeanRCS',[1 1 1],...
+%     'InitialPosition', init_pos, ...
+%     'MotionModel','Velocity', ...
+%     'InitialVelocity', init_velocity, ...
+%     'VelocitySource','Input port' ...
+%     ); %% a commercial jet spinning around itself
+
+comjet = phased.Platform( ...
+    'InitialPosition', init_pos, ...
     'MotionModel','Velocity', ...
     'InitialVelocity', init_velocity, ...
     'VelocitySource','Input port' ...
-    );
+    ); %% a commercial jet spinning around itself
 
+search_radar = phased.Platform( ...
+    'InitialPosition',[0,0,0]',...
+    'ScanMode','Circular',...
+    'AzimuthScanRate',360,...
+    'OrientationAxesOutputPort',true);
 accel = init_acceleration;
-pos   = init_pos;
-vel   = init_velocity;
-ang   = init_angle;
+jet_pos   = init_pos;
+jet_vel   = init_velocity;
+jet_ang   = init_angle;
 
 
-figure(1)
-hold on;
 for i = 1:Nsteps
-    plot(pos(1),pos(2),'b*');
-    [pos] = comjet.step(Tstep,vel);
-    ang = spinningAngle(spin_center,pos);
-    vel = spinningVelocity(angular_speed,spin_radius,ang);
-
+    [jet_pos] = comjet(Tstep,jet_vel);
+    jet_ang = spinningAngle(spin_center,jet_pos);
+    jet_vel = spinningVelocity(angular_speed,spin_radius,jet_ang);
+    [rad_pos,rad_vel] = search_radar(Tstep);
+    [~,rad_ang] = rangeangle(jet_pos);
+    scene.BeamSteering = rad_ang;
+    scene(rad_pos,rad_vel,jet_pos,jet_vel);
+    % drawnow;
 end
 
-function velocity = spinningVelocity(angular_speed,spin_radius,spin_angle)
-    % 2D
-    % angular_speed : positive for clockwise, negative for c.clockwise
-    % spin_angle: azimuth....
-    velocity  = angular_speed * spin_radius * [-sin(spin_angle) cos(spin_angle) 0]';
-end
 
-function accel = spinningAccel(angular_speed,spin_radius,spin_angle)
-    accel  = angular_speed * spin_radius^2 * [-cos(spin_angle) -sin(spin_angle) 0]';
-end
-function ang = spinningAngle(spin_center,current_pos)
-    dir_vec = -(spin_center - current_pos);
-    ang  = atan2(dir_vec(2),dir_vec(1));
-end
+
+
