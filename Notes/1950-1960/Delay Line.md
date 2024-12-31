@@ -10,3 +10,8 @@
 - Staggered PRF
 	- Calculation of the new blind speeds
 	- Repeat the Experiment
+# Presentation Steps
+- show the scenario
+- show the clutterless receive operation
+- show the cluttered operation
+- show the mti operation

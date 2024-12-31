@@ -1,0 +1,4 @@
+- Highlight the concept of matched filter
+- Introduce the concept of Interpolated FIR filters
+- Show a matched filter and compare with interpolated versions with lower order
+- Show a low SNR scenario and compare
