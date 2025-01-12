@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Notes/1950-1960/Filter Section of Radar Technology encyclopedia.md",
+                "file": "README.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Filter Section of Radar Technology encyclopedia"
+              "title": "README"
             }
           }
         ]
@@ -77,7 +77,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "4bfd429a188facf3",
@@ -164,6 +165,7 @@
   },
   "active": "353d917519ef099d",
   "lastOpenFiles": [
+    "Notes/1950-1960/Filter Section of Radar Technology encyclopedia.md",
     "Notes/1990-2000/3. Adaptive filters.md",
     "media/Screencast from 12-20-2024 05:46:42 PM.webm",
     "media/Screencast from 01-05-2025 06:52:23 PM.webm",
@@ -191,7 +193,6 @@
     "Notes/Modern Era/Machine Learning.md",
     "Notes/1950-1960/Transversal Filter.md",
     "Notes/1950-1960/Recursive Filters.md",
-    "Notes/1950-1960/Filter Section of Radar Technology encyclopedia.md",
     "Notes/1950-1960/Delay Line.md",
     "Notes/OUTLINE.md",
     "Notes/PROJECTLOG.md",
