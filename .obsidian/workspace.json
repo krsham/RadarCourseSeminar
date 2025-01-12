@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Notes/1990-2000/1. FFT.md",
+                "file": "Notes/1950-1960/Filter Section of Radar Technology encyclopedia.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "1. FFT"
+              "title": "Filter Section of Radar Technology encyclopedia"
             }
           }
         ]
@@ -164,33 +164,42 @@
   },
   "active": "353d917519ef099d",
   "lastOpenFiles": [
-    "Notes/1970-1980/IIR- FIR.md",
-    "Notes/1950-1960/Delay Line.md",
-    "generatedData/staggeredPRF/mosim",
-    "generatedData/staggeredPRF",
-    "class/staggeredPRF/sprf_sim_param.m",
-    "class/staggeredPRF/untitled.m",
-    "class/staggeredPRF/sprf_scene_param.m",
-    "class/staggeredPRF/sprf_clutter_param.m",
-    "class/staggeredPRF/sprf_target_param.asv",
-    "class/staggeredPRF/sprf_target_param.m",
-    "class/staggeredPRF/sprf_experiment.asv",
-    "class/staggeredPRF/sprf_experiment.m",
-    "Notes/1950-1960/Filter Section of Radar Technology encyclopedia.md",
-    "Notes/1950-1960/Recursive Filters.md",
     "Notes/1990-2000/3. Adaptive filters.md",
+    "media/Screencast from 12-20-2024 05:46:42 PM.webm",
+    "media/Screencast from 01-05-2025 06:52:23 PM.webm",
+    "media/Screencast from 01-05-2025 05:27:11 PM.webm",
+    "media/Screencast from 01-05-2025 05:21:39 PM.webm",
+    "media/Screencast from 01-05-2025 05:18:46 PM.webm",
+    "media/Screencast from 01-05-2025 05:12:55 PM.webm",
+    "media/Screencast from 01-05-2025 05:11:10 PM.webm",
+    "media/Screencast from 01-05-2025 05:09:43 PM.webm",
+    "media/Screencast from 01-04-2025 10:14:07 PM.webm",
+    "media/Screencast from 01-04-2025 10:06:01 PM.webm",
+    "media/Screenshot from 2025-01-05 20-16-44.png",
+    "media/Screenshot from 2025-01-05 20-16-17.png",
+    "media/Screenshot from 2025-01-05 20-15-58.png",
+    "media/Screenshot from 2025-01-05 20-15-47.png",
+    "media/Screenshot from 2025-01-05 20-14-57.png",
+    "media/Screenshot from 2025-01-05 20-04-14.png",
+    "media/Screenshot from 2025-01-05 20-04-04.png",
+    "media/Screenshot from 2025-01-05 20-03-53.png",
+    "media/Screenshot from 2025-01-05 20-03-47.png",
+    "media/Screenshot from 2025-01-05 20-03-44.png",
     "Notes/1990-2000/2. Polyphase.md",
     "Notes/1990-2000/1. FFT.md",
+    "Notes/1970-1980/IIR- FIR.md",
     "Notes/Modern Era/Machine Learning.md",
-    "Notes/OUTLINE.md",
     "Notes/1950-1960/Transversal Filter.md",
+    "Notes/1950-1960/Recursive Filters.md",
+    "Notes/1950-1960/Filter Section of Radar Technology encyclopedia.md",
+    "Notes/1950-1960/Delay Line.md",
+    "Notes/OUTLINE.md",
     "Notes/PROJECTLOG.md",
     "Notes/RadarToolboxScenarioSimulation.md",
     "Notes/Untitled.md",
     "Notes/Where filters are applied....md",
     "Notes/Introduction.md",
     "Notes/TODO.md",
-    "Images/Pasted image 20241129141420.png",
     "README.md"
   ]
 }

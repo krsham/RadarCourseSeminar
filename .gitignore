@@ -1,1 +1,8 @@
 /Dummy
+.vscode
+generatedData
+/dbg
+*.asv
+media
+slprj
+*.mex*

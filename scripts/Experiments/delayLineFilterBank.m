@@ -10,9 +10,11 @@ no_clutter_processing   = false;
 no_clutter_scope        = false;
 generate_clutter        = false;
 clutter_mode            = false;
+doppler_Filter_banks    = false;
+dopplerFB_demo          = true;
 clutter_demo            = false;
 mti_process             = false;
-mti_demo                = true;
+mti_demo                = false;
 %% Parameters
 fc  = 10e9;             % carrier frequency
 pd = 0.9;               % Probability of detection
@@ -84,7 +86,10 @@ clutterTemplate                         = [clutterFolder,'/clutterGenerated'];
 %% MTI Processing
 mtiFlush                                = true;
 [mtiFolder,mtiTemplate]                 = saveFolderDef(rootFolderName,'mtiData','mtiProcessed');
+%% Doppler Filter Bank
 
+dopplerFB_flush                         = true;
+[dopplerFB_folder,dopplerFB_Template]   = saveFolderDef(rootFolderName,'dopplerFBData','doppler_processed');
 
 
 %% delay line canceller Generation
@@ -161,7 +166,7 @@ if motion_simulation
             save(outFile,'motionSimBuffer');
         end
     end
-    
+
     clear motionSimBuffer
 end
 %% Animate
@@ -178,12 +183,12 @@ if viz_mosim
             animosimIndex
             toc
         end
-        
+
         animosimBuffIndex = buffIndex(animosimIndex,moSimIteration);
         if animosimBuffIndex == 1 || animosimIndex == 1
             fileIndex = floor(animosimIndex/moSimIteration) + 1;
             inFile = [moSimOutFolder,'/',animosimFiles{fileIndex}];
-            load(inFile,'motionSimBuffer');abs(mf_pulse)
+            load(inFile,'motionSimBuffer'); 
         end
         scene.BeamSteering = motionSimBuffer.rad_ang(:,animosimBuffIndex);
         scene(motionSimBuffer.rad_pos(:,animosimBuffIndex),...
@@ -191,7 +196,7 @@ if viz_mosim
             motionSimBuffer.tgt_pos(:,animosimBuffIndex),...
             motionSimBuffer.tgt_vel(:,animosimBuffIndex));
         drawnow limitrate
-        
+
     end
     clear animationScenes motionSimBuffer
 end
@@ -215,14 +220,14 @@ if propagate_receive
         end
         noClutterReceptionBuffIndex = buffIndex(rxtxIndex,moSimIteration);
         motionSimBuffer = feedLoad(moSimOutFolder,rxtxIndex,noClutterReceptionBuffIndex,moSimIteration,'motionSimBuffer',motionSimBuffer);
-        
+
         tgt_ang = motionSimBuffer.tgt_ang(:,noClutterReceptionBuffIndex);
         tgt_pos = motionSimBuffer.tgt_pos(:,noClutterReceptionBuffIndex);
         rad_pos = motionSimBuffer.rad_pos(:,noClutterReceptionBuffIndex);
         rad_vel = motionSimBuffer.rad_vel(:,noClutterReceptionBuffIndex);
         tgt_vel = motionSimBuffer.tgt_vel(:,noClutterReceptionBuffIndex);
-        
-        
+
+
         ppulse = waveform();
         [ptxpulse,txStat] = transmitter(ppulse);
         radPulse = radiator(ptxpulse,tgt_ang);
@@ -272,7 +277,7 @@ if receiver_scope
             abs(propRecBuffer.rxpulse(:,rxtxBuffIndex))])
         pause(0.01)
     end
-    
+
 end
 %% No Clutter Range detection
 
@@ -282,12 +287,12 @@ integratedSteps = ceil(Nsteps/num_pulse_int);
 buffSize = bufferSize(Nsteps,integratedIteration);
 
 if no_clutter_processing
-    
+
     initFolder(noClutterReceptionOutFolder,noClutterReceptionFlush);
     noClutterReceptionBufferOut.mf_pulse = zeros(samplesPerWave/mf_ds_factor,num_pulse_int,buffSize);
     noClutterReceptionBufferOut.integ_pulse = zeros(samplesPerWave/mf_ds_factor,buffSize);
     noClutterReceptionBufferIn = [];
-    
+
     movAvg = dsp.MovingAverage(num_pulse_int,0);
     for noClutterReceptionIndex = 1:integratedSteps
         if mod(noClutterReceptionIndex,integratedIteration) == 0
@@ -303,7 +308,7 @@ if no_clutter_processing
         integ_pulse = movAvg(abs(mf_pulse));
         noClutterReceptionBufferOut.mf_pulse(:,:,noClutterReceptionBuffIndex) = mf_pulse';
         noClutterReceptionBufferOut.integ_pulse(:,noClutterReceptionBuffIndex) = integ_pulse';
-        feedSave(noClutterReceptionOutTemplate,noClutterReceptionIndex,integratedSteps,noClutterReceptionBufferOut,noClutterReceptionBuffIndex,integratedIteration)
+        feedSave(noClutterReceptionOutTemplate,noClutterReceptionIndex,integratedSteps,noClutterReceptionBufferOut,noClutterReceptionBuffIndex,integratedIteration,'noClutterReceptionBufferOut');
     end
 end
 %% No Clutter Scope
@@ -329,20 +334,20 @@ if no_clutter_scope
         noClutterReceptionBuffIndex = buffIndex(noClutterReceptionIndex,integratedIteration);
         noClutterReceptionBufferOut = feedLoad(noClutterReceptionOutFolder,noClutterReceptionIndex,...
             noClutterReceptionBuffIndex,buffSize,'noClutterReceptionBufferOut',noClutterReceptionBufferOut);
-        
+
         mf_pulse = noClutterReceptionBufferOut.mf_pulse(:,:,noClutterReceptionBuffIndex);
         integ_pulse = noClutterReceptionBufferOut.integ_pulse(:,noClutterReceptionBuffIndex);
         scope1_in  = abs(reshape(mf_pulse',[],1));
         scope2_in  = [repmat(threshold,size(repelem(integ_pulse(:),num_pulse_int))),...
             repelem(integ_pulse(:),num_pulse_int)];
-        mf_scope(scope1_in...
-            ,scope2_in);
+        % mf_scope(scope1_in...
+        %     ,scope2_in);
         rtiInput = integ_pulse;
         rti(rtiInput);
+        pause(0.001);
         drawnow 'limitrate'
-        pause(0.01)
     end
-    
+
 end
 
 
@@ -370,9 +375,9 @@ end
 if clutter_mode
     initFolder(clutterReceptionOutFolder,clutterFlush);
     movAvg = dsp.MovingAverage(num_pulse_int,0);
-    
+
     clutterRxBuff.mf_pulse_cluttered = zeros(samplesPerWave,moSimIteration);
-    
+
     clutterData      = feedLoad(clutterFolder,1);
     for clutterStep = 1:integratedSteps
         if mod(clutterStep,1000) == 0
@@ -389,11 +394,64 @@ if clutter_mode
         mf_pulse_ds = (downsample(mf_pulse,mf_ds_factor))';
         integ_pulse = movAvg(abs(mf_pulse_ds));
         clutterRxBuff.mf_pulse_cluttered(:,selectRange) = mf_pulse;
-        feedSave(clutterReceptionOutTemplate,clutterStep,integratedSteps,clutterRxBuff,clutterBuffIndex,buffSize);
+        feedSave(clutterReceptionOutTemplate,clutterStep,integratedSteps,clutterRxBuff,clutterBuffIndex,buffSize,'clutterRxBuff');
     end
     clear clutterRxBuff clutterBufferIn
-    
+
 end
+%% Filter processing
+if doppler_Filter_banks
+    initFolder(dopplerFB_folder,dopplerFB_Template);
+    pass_band   =   pulse_bw/10;
+    lpfIIR = dsp.LowpassFilter("FilterOrder",6,"PassbandFrequency",pass_band,"SampleRate",fs,"StopbandAttenuation",60,"DesignForMinimumOrder",false,"FilterType","IIR");
+    filterSoS = lpfIIR.coeffs.SOSMatrix;filterGain = lpfIIR.coeffs.ScaleValues;
+    [filterNum,filterDen] = sos2tf(filterSoS,filterGain);
+    max_speed   = angular_speed*spin_radius;
+    max_doppler = speed2dop(max_speed,c/fc);
+    carrier_count = round(max_doppler*2/pass_band);
+    carrier_range = (carrier_count - 1) / 2;
+    carriers = (1:carrier_range) * 2 * pi * pass_band;
+    t = 1/fs*(1:samplesPerWave);
+    carriers_rh = exp(1j*carriers.*t');
+    carriers = [conj(carriers_rh),ones(samplesPerWave,1),carriers_rh];
+    dopplerBufferIn = [];
+    dopplerFBBuffer.integrated_rx = zeros(samplesPerWave,size(carriers,2),buffSize);
+    for dopplerFBStep = 1:integratedSteps
+        if mod(dopplerFBStep,1000) == 0
+            dopplerFBStep
+        end
+        dopplerBuffIndex = buffIndex(dopplerFBStep,integratedIteration);
+        dopplerBufferIn = feedLoad(propReceiveOutFolder,dopplerFBStep,...
+            dopplerBuffIndex,buffSize,'propRecBuffer',dopplerBufferIn);
+        selectRange = batchSelection(num_pulse_int,dopplerBuffIndex);
+        pulseBuff = dopplerBufferIn.rxpulse(:,selectRange);
+        parfor i = 1:size(pulseBuff,2)
+            pulseDownConv = pulseBuff(:,i) .* carriers;
+            pulseFiltered(:,:,i) = filter(filterNum,filterDen,pulseDownConv,[],1);
+        end
+        mf_pulse = matchedfilter((pulseFiltered));
+        integ_pulse = mean(abs(mf_pulse),3);
+        dopplerFBBuffer.integrated_rx(:,:,dopplerBuffIndex) = integ_pulse;
+        feedSave(dopplerFB_Template,dopplerFBStep,integratedSteps,dopplerFBBuffer,dopplerBuffIndex,buffSize,'dopplerFBBuffer');
+    end
+
+end
+%% doppler Filter bank demo
+if dopplerFB_demo
+    dopplerFBBuffer = [];
+    mview = dsp.MatrixViewer("Name",'Filter Bank Output');
+    for dopplerFBStep = 1:integratedSteps
+        if mod(dopplerFBStep,1000) == 0
+            dopplerFBStep
+        end
+        dopplerBuffIndex = buffIndex(dopplerFBStep,integratedIteration);
+        dopplerFBBuffer = feedLoad(dopplerFB_folder,dopplerFBStep,...
+            dopplerBuffIndex,buffSize,'dopplerFBBuffer',dopplerFBBuffer);
+        mview(dopplerFBBuffer.integrated_rx(:,:,dopplerBuffIndex)');
+        drawnow limitrate
+    end
+end
+
 %% Clutter demo
 if clutter_demo
     clear mf_scope rti
@@ -408,9 +466,9 @@ if clutter_demo
     rti = phased.RTIScope('IQDataInput',false,'SampleRate',fs,...
         'TimeResolution',1/prf,"Name",'Range Time Scope','RangeResolution',range_res,...
         'TimeSpan',0.2);
-    
+
     clutterBufferIn = [];
-    for clutterStep = 1:moSimIteration
+    for clutterStep = 1:integratedSteps
         if mod(clutterStep,1000) == 0
             clutterStep
         end
@@ -419,13 +477,13 @@ if clutter_demo
             ,moSimIteration,'clutterRxBuff',clutterBufferIn);
         mf_pulse = clutterBufferIn.mf_pulse_cluttered(:,clutterDemoBuffIndex);
         scope_in  = abs(mf_pulse);
-        mf_scope(scope_in);
+        % mf_scope(scope_in);
         rtiInput = scope_in;
         rti(rtiInput);
         drawnow limitrate
-        pause(0.01)
+        pause(0.001)
     end
-    
+
 end
 
 %% MTI Mode
@@ -437,8 +495,8 @@ if mti_process
     mtiBuffer.integratedMtiFiltered = zeros(samplesPerWave/num_pulse_int,integratedIteration,numel(filter_coeffs));
     movAvg = dsp.MovingAverage(num_pulse_int,0);
     mtiBufferIn = [];
-    
-    
+
+
     for mtiStep = 1:integratedSteps
         if mod(mtiStep,1000) == 0
             mtiStep
@@ -457,14 +515,14 @@ if mti_process
             integ_mti(:,filterIndex)     =  movAvg(abs(mtiFilteredDs(:,:,filterIndex) )')';
             mtiBuffer.integratedMtiFiltered(:,mtiBuffIndex,filterIndex)  =  integ_mti(:,filterIndex) ;
         end
-        feedSave(mtiTemplate,mtiStep,integratedSteps,mtiBuffer,mtiBuffIndex,buffSize);
+        feedSave(mtiTemplate,mtiStep,integratedSteps,mtiBuffer,mtiBuffIndex,buffSize,'mtiBuffer');
     end
-    
+
 end
 clear rti mf_scope
 fs_integrated =  fs/num_pulse_int/mf_ds_factor;
 if mti_demo
-    
+
     mf_scope = timescope('SampleRate',fs_integrated,'LayoutDimensions',[1,1],...
         'NumInputPorts',1,'MaximizeAxes','off','Name','MF Output', ...
         'TimeSpanSource','property'...
@@ -482,13 +540,13 @@ if mti_demo
             'TimeResolution',num_pulse_int/prf,"Name",'Range Time Scope','RangeResolution',range_res,...
             'TimeSpan',1);
     end
-    
+
     mtiBufferIn = [];
     for mtiStep = 1:integratedSteps
         mtiBuffIndex     = buffIndex(mtiStep,integratedIteration);
         mtiBufferIn      = feedLoad(mtiFolder,mtiStep,mtiBuffIndex...
             ,integratedIteration,'mtiBuffer',mtiBufferIn);
-        pause(0.01);
+        pause(0.001);
         for filterIndex = 1:numel(filter_coeffs)
             sig_disp = squeeze(mtiBufferIn.integratedMtiFiltered(:,mtiBuffIndex,filterIndex));
             rti{filterIndex}(sig_disp);
@@ -496,11 +554,7 @@ if mti_demo
         % sig_disp =  squeeze(mtiBufferIn.integratedMtiFiltered(:,mtiBuffIndex,:));
         % mf_scope.step(sig_disp);
         drawnow limitrate
-        
-    end
-    
-end
 
-function selectRange = batchSelection(batchSize,startIndex)
-selectRange = (startIndex-1)*batchSize+1:startIndex*batchSize;
+    end
+
 end

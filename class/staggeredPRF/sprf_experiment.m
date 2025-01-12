@@ -99,7 +99,7 @@ classdef sprf_experiment
             obj = obj.setSimParams(radar_params,target_params,clutter_params,scene_params);
         end
         function obj = setSimParams(obj,radar_params,target_params,clutter_params,scene_params)
-            obj.TStep = 10/radar_params.prf;
+            obj.TStep = 10/max(radar_params.prf);
             obj.radar_params = radar_params;
             obj.target_params = target_params;
             obj.clutter_params = clutter_params;
@@ -111,9 +111,9 @@ classdef sprf_experiment
 
         function obj = mosim(obj)
             % initialize operation
-            initFolder(obj.currentDestinationFolder,true);
             obj = obj.setupOperation(obj.NSteps,obj.noIterationBufferSize,[],...
                 [],'mosim','mosim_log');
+            initFolder(obj.currentDestinationFolder,true);
             % initialize buffers
             motionSimBuffer.tgt_pos = zeros(3,obj.noIterationBufferSize);
             motionSimBuffer.tgt_ang = zeros(1,obj.noIterationBufferSize);
@@ -141,6 +141,52 @@ classdef sprf_experiment
 
 
         end
+        
+        function obj = prop_simulation(obj)
+            % initialize operation
+            obj = obj.setupOperation(obj.NSteps,obj.noIterationBufferSize,'mosim',...
+                'motionSimBuffer','propsim','propsim_log');
+            initFolder(obj.currentDestinationFolder,true);
+            propRecBuffer.pulse = zeros(obj.radar_params.samples_per_wave,obj.noIterationBufferSize);
+            propRecBuffer.txpulse = zeros(obj.radar_params.samples_per_wave,obj.noIterationBufferSize);
+            propRecBuffer.txstat = zeros(obj.radar_params.samples_per_wave,obj.noIterationBufferSize);
+            propRecBuffer.radpulse = zeros(obj.radar_params.samples_per_wave,obj.noIterationBufferSize);
+            propRecBuffer.chOut = zeros(obj.radar_params.samples_per_wave,obj.noIterationBufferSize);
+            propRecBuffer.tgtReflPulse = zeros(obj.radar_params.samples_per_wave,obj.noIterationBufferSize);
+            propRecBuffer.collSig = zeros(obj.radar_params.samples_per_wave,obj.noIterationBufferSize);
+            propRecBuffer.rxpulse = zeros(obj.radar_params.samples_per_wave,obj.noIterationBufferSize);
+            motionSimBuffer = [];
+            for i = 1:obj.currentTotalSteps
+                motionSimBuffer = obj.bufferLoad(motionSimBuffer);
+                obj = obj.updateState();
+                tgt_ang = motionSimBuffer.tgt_ang(:,obj.currentBufferIndex);
+                tgt_pos = motionSimBuffer.tgt_pos(:,obj.currentBufferIndex);
+                rad_pos = motionSimBuffer.rad_pos(:,obj.currentBufferIndex);
+                rad_vel = motionSimBuffer.rad_vel(:,obj.currentBufferIndex);
+                tgt_vel = motionSimBuffer.tgt_vel(:,obj.currentBufferIndex);
+
+
+                ppulse = obj.waveform();
+                [ptxpulse,txStat] = obj.transmitter(ppulse);
+                radPulse = obj.radiator(ptxpulse,tgt_ang);
+                chOut = obj.channel(radPulse,rad_pos,tgt_pos,rad_vel,tgt_vel);
+                tgtRefpulse = obj.target(chOut);
+                collSig = obj.collector(tgtRefpulse,tgt_ang);
+                prxPulse = obj.receiver(collSig,~(txStat>0));
+                %%%
+                propRecBuffer.pulse(:,obj.currentBufferIndex)        = ppulse;
+                propRecBuffer.txpulse(:,obj.currentBufferIndex)      = ptxpulse;
+                propRecBuffer.tgtReflPulse(:,obj.currentBufferIndex) = tgtRefpulse;
+                propRecBuffer.collSig(:,obj.currentBufferIndex)      = collSig;
+                propRecBuffer.txstat(:,obj.currentBufferIndex)       = txStat;
+                propRecBuffer.radpulse(:,obj.currentBufferIndex)     = radPulse;
+                propRecBuffer.chOut(:,obj.currentBufferIndex)        = chOut;
+                propRecBuffer.rxpulse(:,obj.currentBufferIndex)      = prxPulse;
+                obj.checkPointSave(propRecBuffer);
+            end
+            
+        end
+
         function obj = setupOperation(obj,varargin)
             %% setup save folder load folder etc
             %% 1.totalsteps 2.bufferSize 3.sourceFolder([] if no load) 4.sourceBufferName 5.destinationfoldername 5.saveFileName
@@ -191,7 +237,8 @@ classdef sprf_experiment
             feedSave(obj.currentSaveNameTemplate,obj.currentStep,obj.currentTotalSteps,buffer,obj.currentBufferIndex,obj.currentBufferSize,buffName);
         end
         function buffer = bufferLoad(obj,bufferIn)
-            buffer = feedLoad(obj.currentSourceFolder,obj.currentStep,obj.currentBufferIndex,obj.currentBufferSize,obj.currentSourceBufferName,bufferIn);
+            source_folder = saveFolderDef(obj.logFolderRoot,obj.currentSourceFolder,'');
+            buffer = feedLoad(source_folder,obj.currentStep,obj.currentBufferIndex,obj.currentBufferSize,obj.currentSourceBufferName,bufferIn);
         end
         %% get Functions
         function Nsteps = get.NSteps(obj)
